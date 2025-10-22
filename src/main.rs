@@ -1,6 +1,6 @@
-use axum::{extract::Path, response::Html, routing::get, Router};
-use std::{env, net::SocketAddr};
+use axum::{Router, extract::Path, response::Html, routing::get};
 use dotenvy::dotenv;
+use std::{env, net::SocketAddr};
 
 #[tokio::main]
 async fn main() {
