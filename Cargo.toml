@@ -1,0 +1,6 @@
+[package]
+name = "surl_redirect_microservice"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
