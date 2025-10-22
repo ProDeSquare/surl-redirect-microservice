@@ -1,9 +1,15 @@
 use axum::{extract::Path, response::Html, routing::get, Router};
-use std::{net::SocketAddr};
+use std::{env, net::SocketAddr};
+use dotenvy::dotenv;
 
 #[tokio::main]
 async fn main() {
-    let port: u16 = 8080;
+    dotenv().ok();
+
+    let port: u16 = env::var("PORT")
+        .unwrap_or_else(|_| "8080".to_string())
+        .parse()
+        .expect("PORT must be a number");
 
     let app = Router::new()
         .route("/", get(root_handler))
