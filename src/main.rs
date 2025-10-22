@@ -1,10 +1,16 @@
 mod db;
 
-use axum::{extract::{Path, State}, http::StatusCode, response::{Html, Redirect}, routing::get, Router};
+use axum::{
+    Router,
+    extract::{Path, State},
+    http::StatusCode,
+    response::{Html, Redirect},
+    routing::get,
+};
+use db::init_pool;
+use deadpool_postgres::Pool;
 use dotenvy::dotenv;
 use std::{env, net::SocketAddr};
-use deadpool_postgres::Pool;
-use db::init_pool;
 
 #[tokio::main]
 async fn main() {
@@ -42,14 +48,20 @@ async fn root_handler() -> Html<&'static str> {
     ")
 }
 
-async fn test_slug(State(pool): State<Pool>, Path(slug): Path<String>) -> Result<Redirect, StatusCode> {
+async fn test_slug(
+    State(pool): State<Pool>,
+    Path(slug): Path<String>,
+) -> Result<Redirect, StatusCode> {
     let client = pool
         .get()
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let row = client
-        .query_opt("SELECT id, url, enabled FROM shorts WHERE hash = $1", &[&slug])
+        .query_opt(
+            "SELECT id, url, enabled FROM shorts WHERE hash = $1",
+            &[&slug],
+        )
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
@@ -69,6 +81,6 @@ async fn test_slug(State(pool): State<Pool>, Path(slug): Path<String>) -> Result
                 Ok(Redirect::temporary(&url))
             }
         }
-        None => Err(StatusCode::NOT_FOUND)
+        None => Err(StatusCode::NOT_FOUND),
     }
 }
