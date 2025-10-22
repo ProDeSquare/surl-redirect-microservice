@@ -1,3 +1,27 @@
-fn main() {
-    println!("Hello, world!");
+use axum::{extract::Path, response::Html, routing::get, Router};
+use std::{net::SocketAddr};
+
+#[tokio::main]
+async fn main() {
+    let port: u16 = 8080;
+
+    let app = Router::new()
+        .route("/", get(root_handler))
+        .route("/l/{slug}", get(test_slug));
+
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+
+    println!("Server up and running on port http://127.0.0.1:{}", port);
+
+    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app)
+        .await
+        .unwrap();
+}
+
+async fn root_handler() -> Html<&'static str> {
+    Html("<h1>Hello World!</h1>")
+}
+
+async fn test_slug(Path(slug): Path<String>) -> Html<String> {
+    Html(format!("<p>{}</p>", slug))
 }
