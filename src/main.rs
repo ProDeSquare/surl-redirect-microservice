@@ -1,6 +1,6 @@
 mod db;
 
-use axum::{Router, extract::{Path, State}, response::Html, routing::get};
+use axum::{extract::{Path, State}, http::StatusCode, response::{Html, Redirect}, routing::get, Router};
 use dotenvy::dotenv;
 use std::{env, net::SocketAddr};
 use deadpool_postgres::Pool;
@@ -31,13 +31,32 @@ async fn main() {
         .unwrap();
 }
 
-async fn root_handler(State(pool): State<Pool>) -> Html<String> {
-    match pool.get().await {
-        Ok(_) => Html("<h1>Database connected</h1>".to_string()),
-        Err(err) => Html(format!("<h1>Database Error</h1><p>{}</p>", err)),
-    }
+async fn root_handler() -> Html<&'static str> {
+    Html("<h1>Hello World!</h1>")
 }
 
-async fn test_slug(Path(slug): Path<String>) -> Html<String> {
-    Html(format!("<p>{}</p>", slug))
+async fn test_slug(State(pool): State<Pool>, Path(slug): Path<String>) -> Result<Redirect, StatusCode> {
+    let client = pool
+        .get()
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let row = client
+        .query_opt("SELECT id, url, enabled FROM shorts WHERE hash = $1", &[&slug])
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    match row {
+        Some(row) => {
+            let enabled: bool = row.get("enabled");
+            let url: String = row.get("url");
+
+            if !enabled {
+                Err(StatusCode::NOT_FOUND)
+            } else {
+                Ok(Redirect::temporary(&url))
+            }
+        }
+        None => Err(StatusCode::NOT_FOUND)
+    }
 }
