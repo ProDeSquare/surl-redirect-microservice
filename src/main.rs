@@ -32,7 +32,14 @@ async fn main() {
 }
 
 async fn root_handler() -> Html<&'static str> {
-    Html("<h1>Hello World!</h1>")
+    Html("
+        <style>
+            body{background:#24252a;color:white;display:grid;height:100svh;place-content:center;text-align:center;font-family:sans-serif;}
+            a{color:lightblue;text-decoration:none}
+        </style>
+        <h1>sURL - ProDeSquare</h1>
+        <a href=\"https://github.com/ProDeSquare/sURL\">View on Github</a>
+    ")
 }
 
 async fn test_slug(State(pool): State<Pool>, Path(slug): Path<String>) -> Result<Redirect, StatusCode> {
@@ -49,11 +56,16 @@ async fn test_slug(State(pool): State<Pool>, Path(slug): Path<String>) -> Result
     match row {
         Some(row) => {
             let enabled: bool = row.get("enabled");
+            let short_id: i64 = row.get("id");
             let url: String = row.get("url");
 
             if !enabled {
                 Err(StatusCode::NOT_FOUND)
             } else {
+                let _ = client
+                    .execute("INSERT INTO clicks (short_id, created_at, updated_at) VALUES ($1, now(), now())", &[&short_id])
+                .await;
+
                 Ok(Redirect::temporary(&url))
             }
         }

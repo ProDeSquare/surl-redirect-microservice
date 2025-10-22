@@ -1,6 +1,6 @@
 use deadpool_postgres::{Manager, Pool};
-use tokio_postgres::{Config, NoTls};
 use std::env;
+use tokio_postgres::{Config, NoTls};
 
 pub async fn init_pool() -> Pool {
     let url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
