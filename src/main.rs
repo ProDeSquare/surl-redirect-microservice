@@ -11,6 +11,9 @@ use db::init_pool;
 use deadpool_postgres::Pool;
 use dotenvy::dotenv;
 use std::{env, net::SocketAddr};
+use tower_governor::{
+    GovernorLayer, governor::GovernorConfigBuilder, key_extractor::GlobalKeyExtractor,
+};
 
 #[tokio::main]
 async fn main() {
@@ -26,6 +29,14 @@ async fn main() {
     let app = Router::new()
         .route("/", get(root_handler))
         .route("/l/{slug}", get(test_slug))
+        .layer(GovernorLayer::new(
+            GovernorConfigBuilder::default()
+                .key_extractor(GlobalKeyExtractor)
+                .per_second(10)
+                .burst_size(10)
+                .finish()
+                .unwrap(),
+        ))
         .with_state(pool);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
