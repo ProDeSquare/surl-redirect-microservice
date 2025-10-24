@@ -28,7 +28,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(root_handler))
-        .route("/l/{slug}", get(test_slug))
+        .route("/l/{slug}", get(redirect_url))
         .layer(GovernorLayer::new(
             GovernorConfigBuilder::default()
                 .key_extractor(GlobalKeyExtractor)
@@ -59,7 +59,7 @@ async fn root_handler() -> Html<&'static str> {
     ")
 }
 
-async fn test_slug(
+async fn redirect_url(
     State(pool): State<Pool>,
     Path(slug): Path<String>,
 ) -> Result<Redirect, StatusCode> {
